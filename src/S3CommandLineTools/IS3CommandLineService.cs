@@ -11,7 +11,7 @@ namespace S3CommandLineTools
 
         /// <summary>获取Bucket权限
         /// </summary>
-        Task GetAclAsync(string bucket);
+        Task GetAclAsync(string bucket, string objectKey = "");
 
         /// <summary>List objects
         /// </summary>
@@ -44,5 +44,9 @@ namespace S3CommandLineTools
         /// <summary>GetPreSignedURL
         /// </summary>
         void GeneratePreSignedURL(string bucket, string objectKey, DateTime expires);
+
+        /// <summary>Test upload download speed
+        /// </summary>
+        Task TestSpeedAsync(string bucket, int fileSize = 1024 * 512, int fileCount = 100, bool autoDelete = true);
     }
 }

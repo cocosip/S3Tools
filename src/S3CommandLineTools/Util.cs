@@ -23,5 +23,21 @@ namespace S3CommandLineTools
             return 0;
         }
 
+        public static void DeleteIfExists(string filePath)
+        {
+            if (File.Exists(filePath))
+            {
+                File.Delete(filePath);
+            }
+        }
+
+        public static void CreateIfNotExists(string directory)
+        {
+            if (!Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+        }
+
     }
 }

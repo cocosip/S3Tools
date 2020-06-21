@@ -38,6 +38,7 @@ namespace S3CommandLineTools
 
             app
                 .ConfigCommand(configuration)
+                .SpeedCommand(serviceProvider)
                 .AclCommand(serviceProvider)
                 .ListBucketCommand(serviceProvider)
                 .ListCommand(serviceProvider)

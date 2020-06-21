@@ -43,20 +43,54 @@ namespace S3CommandLineTools
 
         /// <summary>获取Bucket权限
         /// </summary>
-        public async Task GetAclAsync(string bucket)
+        public async Task GetAclAsync(string bucket, string objectKey = "")
         {
-            _console.WriteLine("--- Get bucket acl ---");
-            var getACLResponse = await GetClient().GetACLAsync(new GetACLRequest()
+            _console.WriteLine("--- Get acl ---");
+            var client = GetClient();
+
+            var getACLRequest = new GetACLRequest()
             {
                 BucketName = bucket
-            });
+            };
 
+            if (!string.IsNullOrWhiteSpace(objectKey))
+            {
+                getACLRequest.Key = objectKey;
+            }
+
+            var getACLResponse = await client.GetACLAsync(getACLRequest);
             foreach (var grant in getACLResponse.AccessControlList.Grants)
             {
                 Console.WriteLine("Current bucket acl:{0}", grant.Permission.Value);
             }
-            _console.WriteLine("--- End of get bucket acl ---");
+            _console.WriteLine("--- End of get acl ---");
         }
+
+        //public async Task PutAclAsync(string bucket, string objectKey = "")
+        //{
+        //    _console.WriteLine("--- Set acl ---");
+        //    var client = GetClient();
+
+        //    var putACLRequest = new PutACLRequest()
+        //    {
+        //        BucketName = bucket,
+        //        AccessControlList=new S3AccessControlList()
+        //        {
+        //            Grants=new List<S3Grant>()
+        //            {
+
+        //            }
+        //        }
+        //    };
+
+        //    if (!string.IsNullOrWhiteSpace(objectKey))
+        //    {
+        //        putACLRequest.Key = objectKey;
+        //    }
+
+        //    var putACLResponse = await client.PutACLAsync(putACLRequest);
+        //    _console.WriteLine("--- End of set acl ---");
+        //}
 
 
         /// <summary>List objects
@@ -285,9 +319,92 @@ namespace S3CommandLineTools
             _console.WriteLine("--- End of GeneratePreSignedURL ---");
         }
 
+        /// <summary>Test upload download speed
+        /// </summary>
+        public async Task TestSpeedAsync(string bucket, int fileSize = 1024 * 512, int fileCount = 100, bool autoDelete = true)
+        {
+            _console.WriteLine("--- Test speed ---");
+            var client = GetClient();
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
+            var objectKeys = new List<string>();
+            var totalSizeMB = (fileSize * fileCount * 1.0) / 1024 / 1024;
+
+            _console.WriteLine("--- Upload speed begin ---");
+
+            try
+            {
+                for (int i = 0; i < fileCount; i++)
+                {
+                    var objectKey = $"S3CommandLineTest/{Guid.NewGuid()}.txt";
+                    using (var ms = new MemoryStream())
+                    {
+                        if (fileSize > 1024 * 1024 * 5)
+                        {
+                            await MultipartUploadAsync(bucket, objectKey, stream: ms);
+                        }
+                        else
+                        {
+                            await SimpleUploadAsync(bucket, objectKey, stream: ms);
+                        }
+                    }
+                    objectKeys.Add(objectKey);
+                }
+            }
+            finally
+            {
+                stopwatch.Stop();
+            }
+
+            _console.WriteLine("--- Upload speed end ---");
+
+            var uploadSpeed = totalSizeMB / stopwatch.Elapsed.TotalSeconds;
+            var uploadTotalMillSeconds = stopwatch.Elapsed.TotalMilliseconds;
 
 
+            stopwatch.Reset();
+            stopwatch.Restart();
 
+            _console.WriteLine("--- Download speed begin ---");
+            var tempFiles = new List<string>();
+            try
+            {
+                foreach (var objectKey in objectKeys)
+                {
+                    var filePath = Path.Combine(_option.TemporaryPath, $"{Guid.NewGuid()}.txt");
+                    await client.DownloadToFilePathAsync(bucket, objectKey, filePath, null);
+                    tempFiles.Add(filePath);
+                    _console.WriteLine("download '{0}' to '{1}'", objectKey, filePath);
+                }
+            }
+            finally
+            {
+                stopwatch.Stop();
+            }
+            _console.WriteLine("--- Download speed end ---");
+
+            _console.WriteLine("Upload speed,thread:{0},totalSize:'{1} MB',elapsed:'{2} ms', speed:'{3} MB/S' ", 1, totalSizeMB, uploadTotalMillSeconds, uploadSpeed);
+
+            var downloadSpeed = totalSizeMB / stopwatch.Elapsed.TotalSeconds;
+            var downloadTotalMillSeconds = stopwatch.Elapsed.TotalMilliseconds;
+
+
+            if (autoDelete)
+            {
+                await DeleteObjectAsync(bucket, objectKeys.ToArray());
+            }
+
+            foreach (var tempFile in tempFiles)
+            {
+                Util.DeleteIfExists(tempFile);
+            }
+
+            _console.WriteLine("Upload speed,thread:{0},totalSize:'{1} MB',elapsed:'{2} ms', speed:'{3} MB/S' ", 1, totalSizeMB, uploadTotalMillSeconds, uploadSpeed);
+
+            _console.WriteLine("Download speed,thread:{0},totalSize:'{1} MB',elapsed:'{2} ms', speed:'{3} MB/S' ", 1, totalSizeMB, downloadTotalMillSeconds, downloadSpeed);
+
+            _console.WriteLine("--- End of test speed ---");
+        }
 
         #region Private Methods
         private IAmazonS3 GetClient()

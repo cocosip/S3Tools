@@ -84,6 +84,36 @@ namespace S3CommandLineTools
             return app;
         }
 
+        /// <summary>Config command
+        /// </summary>
+        public static CommandLineApplication SpeedCommand(this CommandLineApplication app, IServiceProvider serviceProvider)
+        {
+            var s3CommandLineService = serviceProvider.GetService<IS3CommandLineService>();
+            var option = serviceProvider.GetService<IOptions<S3CommandLineOption>>().Value;
+
+            app.Command("speed", commandLine =>
+            {
+                commandLine.ResponseFileHandling = ResponseFileHandling.ParseArgsAsLineSeparated;
+                commandLine.Description = "Test speed";
+
+                var bucketOption = commandLine.Option("-b|--bucket", $"BucketName,default is '{option.DefaultBucket}'", CommandOptionType.SingleOrNoValue);
+                var fileSizeOption = commandLine.Option<int>("-s|--size", "Test file size", CommandOptionType.SingleOrNoValue);
+                var fileCountOption = commandLine.Option<int>("-c|--count", "Test file count", CommandOptionType.SingleOrNoValue);
+                var autoDeleteOption = commandLine.Option<bool>("-a|--autodel", "Auto delete the upload files(default is true)", CommandOptionType.SingleOrNoValue);
+
+                commandLine.OnExecuteAsync((cancellationToken) =>
+                {
+                    var bucket = bucketOption.HasValue() ? bucketOption.Value() : option.DefaultBucket;
+                    var fileSize = fileSizeOption.HasValue() ? fileSizeOption.ParsedValue : 1024 * 512;
+                    var fileCount = fileCountOption.HasValue() ? fileCountOption.ParsedValue : 100;
+                    var autoDelete = autoDeleteOption.HasValue() ? autoDeleteOption.ParsedValue : true;
+                    return s3CommandLineService.TestSpeedAsync(bucket, fileSize, fileCount, autoDelete);
+                });
+
+            });
+            return app;
+        }
+
 
         /// <summary>List bucket
         /// </summary>
@@ -91,7 +121,7 @@ namespace S3CommandLineTools
         {
             var s3CommandLineService = serviceProvider.GetService<IS3CommandLineService>();
             //s3-cli listbucket
-            app.Command("listbucket", commandLine =>
+            app.Command("list_bucket", commandLine =>
             {
                 commandLine.ResponseFileHandling = ResponseFileHandling.ParseArgsAsLineSeparated;
                 commandLine.Description = "List bucket";
@@ -144,14 +174,21 @@ namespace S3CommandLineTools
             app.Command("acl", commandLine =>
             {
                 commandLine.ResponseFileHandling = ResponseFileHandling.ParseArgsAsLineSeparated;
-                commandLine.Description = "Get bucket acls";
+                commandLine.Description = "Get or set bucket acls";
 
-                var bucketOption = commandLine.Option("-b|--bucket", $"BucketName,default is '{option.DefaultBucket}'", CommandOptionType.SingleOrNoValue);
-                commandLine.OnExecuteAsync((cancellationToken) =>
+                commandLine.Command("get", aclCommand =>
                 {
-                    var bucket = bucketOption.HasValue() ? bucketOption.Value() : option.DefaultBucket;
-                    return s3CommandLineService.GetAclAsync(bucket);
+                    var bucketOption = aclCommand.Option("-b|--bucket", $"BucketName,default is '{option.DefaultBucket}'", CommandOptionType.SingleOrNoValue);
+                    var objectKeyOption = aclCommand.Option("-k|--key", $"Object key", CommandOptionType.SingleOrNoValue);
+
+                    aclCommand.OnExecuteAsync((cancellationToken) =>
+                    {
+                        var bucket = bucketOption.HasValue() ? bucketOption.Value() : option.DefaultBucket;
+                        var objectKey = objectKeyOption.HasValue() ? objectKeyOption.Value() : "";
+                        return s3CommandLineService.GetAclAsync(bucket, objectKey);
+                    });
                 });
+
             });
             return app;
         }
@@ -170,7 +207,7 @@ namespace S3CommandLineTools
                 commandLine.Description = "Download objects to temp path";
 
                 var bucketOption = commandLine.Option("-b|--bucket", $"BucketName,default is '{option.DefaultBucket}'", CommandOptionType.SingleOrNoValue);
-                var objectKeysOption = commandLine.Option("-k|--key <KEYS>", "Download Key(s)", CommandOptionType.MultipleValue);
+                var objectKeysOption = commandLine.Option("-k|--key <KEYS>", "Download key(s)", CommandOptionType.MultipleValue);
 
                 commandLine.OnExecuteAsync((cancellationToken) =>
                 {
@@ -267,7 +304,7 @@ namespace S3CommandLineTools
                 commandLine.Description = "Delete objects";
 
                 var bucketOption = commandLine.Option("-b|--bucket", $"BucketName,default is '{option.DefaultBucket}'", CommandOptionType.SingleOrNoValue);
-                var objectKeysOption = commandLine.Option("-k|--key <KEYS>", "Download Key(s)", CommandOptionType.MultipleValue);
+                var objectKeysOption = commandLine.Option("-k|--key <KEYS>", "Delete key(s)", CommandOptionType.MultipleValue);
 
                 commandLine.OnExecuteAsync((cancellationToken) =>
                 {
@@ -294,8 +331,8 @@ namespace S3CommandLineTools
                 var sourceBucketOption = commandLine.Option("-sb|--sourcebucket", $"Source bucket name,default is '{option.DefaultBucket}'", CommandOptionType.SingleOrNoValue);
                 var destBucketOption = commandLine.Option("-db|--destbucket", $"Destination bucket name,default is '{option.DefaultBucket}'", CommandOptionType.SingleOrNoValue);
 
-                var sourceKeyOption = commandLine.Option("-sk|--key", "Source key", CommandOptionType.SingleValue);
-                var destKeyOption = commandLine.Option("-dk|--key", "Destination key", CommandOptionType.SingleValue);
+                var sourceKeyOption = commandLine.Option("-sk|--sourcekey", "Source key", CommandOptionType.SingleValue);
+                var destKeyOption = commandLine.Option("-dk|--destkey", "Destination key", CommandOptionType.SingleValue);
 
                 commandLine.OnExecuteAsync((cancellationToken) =>
                 {
