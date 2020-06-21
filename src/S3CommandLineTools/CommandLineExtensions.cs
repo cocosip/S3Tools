@@ -8,11 +8,39 @@ using System.Text.Json;
 using System.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using System.Linq;
 
 namespace S3CommandLineTools
 {
     public static class CommandLineExtensions
     {
+        /// <summary>Config command
+        /// </summary>
+        public static CommandLineApplication InfoCommandOption(this CommandLineApplication app, IConfiguration configuration)
+        {
+            var infoOption = app.Option("-i|--info", $"Info", CommandOptionType.NoValue);
+            app.OnExecute(() =>
+            {
+                if (infoOption.Values != null && infoOption.Values.Any())
+                {
+                    Console.WriteLine("--- S3-CLI ---");
+                    Console.WriteLine("Version:");
+                    Console.WriteLine(AppConsts.Version);
+                    Console.WriteLine("");
+                    Console.WriteLine("Config:");
+                    Console.WriteLine("Vendor:{0}", configuration.GetSection("S3CommandLineOption")["Vendor"]);
+                    Console.WriteLine("AccessKeyId:{0}", configuration.GetSection("S3CommandLineOption")["AccessKeyId"]);
+                    Console.WriteLine("SecretAccessKey:{0}", configuration.GetSection("S3CommandLineOption")["SecretAccessKey"]);
+                    Console.WriteLine("ServerUrl:{0}", configuration.GetSection("S3CommandLineOption")["ServerUrl"]);
+                    Console.WriteLine("DefaultBucket:{0}", configuration.GetSection("S3CommandLineOption")["DefaultBucket"]);
+                    Console.WriteLine("ForcePathStyle:{0}", configuration.GetSection("S3CommandLineOption")["ForcePathStyle"]);
+                    Console.WriteLine("SignatureVersion:{0}", configuration.GetSection("S3CommandLineOption")["SignatureVersion"]);
+                    Console.WriteLine("TemporaryPath:{0}", configuration.GetSection("S3CommandLineOption")["TemporaryPath"]);
+                }
+            });
+            return app;
+        }
+
         /// <summary>Config command
         /// </summary>
         public static CommandLineApplication ConfigCommand(this CommandLineApplication app, IConfiguration configuration)
@@ -23,21 +51,21 @@ namespace S3CommandLineTools
                 commandLine.Description = "Config some global configuration,such as 'ak','sk'...";
                 //set config value
                 //s3-cli config info
-                commandLine.Command("info", configCommand =>
-                {
-                    configCommand.OnExecute(() =>
-                    {
-                        Console.WriteLine("--- s3-cli info ---");
-                        Console.WriteLine("Vendor:{0}", configuration.GetSection("S3CommandLineOption")["Vendor"]);
-                        Console.WriteLine("AccessKeyId:{0}", configuration.GetSection("S3CommandLineOption")["AccessKeyId"]);
-                        Console.WriteLine("SecretAccessKey:{0}", configuration.GetSection("S3CommandLineOption")["SecretAccessKey"]);
-                        Console.WriteLine("ServerUrl:{0}", configuration.GetSection("S3CommandLineOption")["ServerUrl"]);
-                        Console.WriteLine("DefaultBucket:{0}", configuration.GetSection("S3CommandLineOption")["DefaultBucket"]);
-                        Console.WriteLine("ForcePathStyle:{0}", configuration.GetSection("S3CommandLineOption")["ForcePathStyle"]);
-                        Console.WriteLine("SignatureVersion:{0}", configuration.GetSection("S3CommandLineOption")["SignatureVersion"]);
-                        Console.WriteLine("TemporaryPath:{0}", configuration.GetSection("S3CommandLineOption")["TemporaryPath"]);
-                    });
-                });
+                //commandLine.Command("info", configCommand =>
+                //{
+                //    configCommand.OnExecute(() =>
+                //    {
+                //        Console.WriteLine("--- s3-cli info ---");
+                //        Console.WriteLine("Vendor:{0}", configuration.GetSection("S3CommandLineOption")["Vendor"]);
+                //        Console.WriteLine("AccessKeyId:{0}", configuration.GetSection("S3CommandLineOption")["AccessKeyId"]);
+                //        Console.WriteLine("SecretAccessKey:{0}", configuration.GetSection("S3CommandLineOption")["SecretAccessKey"]);
+                //        Console.WriteLine("ServerUrl:{0}", configuration.GetSection("S3CommandLineOption")["ServerUrl"]);
+                //        Console.WriteLine("DefaultBucket:{0}", configuration.GetSection("S3CommandLineOption")["DefaultBucket"]);
+                //        Console.WriteLine("ForcePathStyle:{0}", configuration.GetSection("S3CommandLineOption")["ForcePathStyle"]);
+                //        Console.WriteLine("SignatureVersion:{0}", configuration.GetSection("S3CommandLineOption")["SignatureVersion"]);
+                //        Console.WriteLine("TemporaryPath:{0}", configuration.GetSection("S3CommandLineOption")["TemporaryPath"]);
+                //    });
+                //});
 
                 //s3-cli config set -ak 123 -sk 232323 -s http://192.168.0.3 -f true -sv 2.0
                 commandLine.Command("set", configCommand =>

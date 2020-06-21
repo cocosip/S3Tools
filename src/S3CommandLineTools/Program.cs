@@ -28,15 +28,15 @@ namespace S3CommandLineTools
             {
                 Name = "s3-cli",
                 Description = "s3-cli tool",
-                ResponseFileHandling = ResponseFileHandling.ParseArgsAsLineSeparated
+                ResponseFileHandling = ResponseFileHandling.ParseArgsAsLineSeparated,
             };
 
             app.Conventions
                 .UseDefaultConventions()
                 .UseConstructorInjection(serviceProvider);
-            app.HelpOption();
-
+            app.VersionOption("-v|--version", AppConsts.Version);
             app
+                .InfoCommandOption(configuration)
                 .ConfigCommand(configuration)
                 .SpeedCommand(serviceProvider)
                 .AclCommand(serviceProvider)
@@ -52,11 +52,16 @@ namespace S3CommandLineTools
             return app.Execute(args);
         }
 
-
-        private void OnExecute()
+        private IConsole _console;
+        public Program(IConsole console)
         {
-            Console.WriteLine("Execute!!!");
+            _console = console;
         }
 
+        private int OnExecute()
+        {
+            _console.WriteLine("Welcome s3-cli !");
+            return 0;
+        }
     }
 }
