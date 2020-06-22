@@ -183,10 +183,10 @@ Task("Default")
    .IsDependentOn("Build")
    .IsDependentOn("Test")
    .IsDependentOn("Pack")
-   .IsDependentOn("Publish")
+   //.IsDependentOn("Publish")
    .Does(() =>
    {
-      Information("DotCommon build complete!");
+      Information("S3Tools build complete!");
    });
 
 RunTarget(parameters.Target);
