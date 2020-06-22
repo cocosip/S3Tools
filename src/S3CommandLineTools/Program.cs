@@ -36,15 +36,13 @@ namespace S3CommandLineTools
                 .UseConstructorInjection(serviceProvider);
             app.VersionOption("-v|--version", AppConsts.Version);
             app
-                .InfoCommandOption(configuration)
-                .ConfigCommand(configuration)
+                .InfoCommandOption(serviceProvider, configuration)
+                .ConfigCommand(serviceProvider, configuration)
                 .SpeedCommand(serviceProvider)
                 .AclCommand(serviceProvider)
-                .ListBucketCommand(serviceProvider)
                 .ListCommand(serviceProvider)
                 .DownloadCommand(serviceProvider)
                 .UploadCommand(serviceProvider)
-                .UploadDefaultCommand(serviceProvider)
                 .DeleteCommand(serviceProvider)
                 .CopyCommand(serviceProvider)
                 .GenerateUrlCommand(serviceProvider);

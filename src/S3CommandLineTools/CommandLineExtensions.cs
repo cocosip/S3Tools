@@ -16,26 +16,27 @@ namespace S3CommandLineTools
     {
         /// <summary>Config command
         /// </summary>
-        public static CommandLineApplication InfoCommandOption(this CommandLineApplication app, IConfiguration configuration)
+        public static CommandLineApplication InfoCommandOption(this CommandLineApplication app, IServiceProvider serviceProvider, IConfiguration configuration)
         {
+            var console = serviceProvider.GetService<IConsole>();
             var infoOption = app.Option("-i|--info", $"Info", CommandOptionType.NoValue);
             app.OnExecute(() =>
             {
                 if (infoOption.Values != null && infoOption.Values.Any())
                 {
-                    Console.WriteLine("--- S3-CLI ---");
-                    Console.WriteLine("Version:");
-                    Console.WriteLine(AppConsts.Version);
-                    Console.WriteLine("");
-                    Console.WriteLine("Config:");
-                    Console.WriteLine("Vendor:{0}", configuration.GetSection("S3CommandLineOption")["Vendor"]);
-                    Console.WriteLine("AccessKeyId:{0}", configuration.GetSection("S3CommandLineOption")["AccessKeyId"]);
-                    Console.WriteLine("SecretAccessKey:{0}", configuration.GetSection("S3CommandLineOption")["SecretAccessKey"]);
-                    Console.WriteLine("ServerUrl:{0}", configuration.GetSection("S3CommandLineOption")["ServerUrl"]);
-                    Console.WriteLine("DefaultBucket:{0}", configuration.GetSection("S3CommandLineOption")["DefaultBucket"]);
-                    Console.WriteLine("ForcePathStyle:{0}", configuration.GetSection("S3CommandLineOption")["ForcePathStyle"]);
-                    Console.WriteLine("SignatureVersion:{0}", configuration.GetSection("S3CommandLineOption")["SignatureVersion"]);
-                    Console.WriteLine("TemporaryPath:{0}", configuration.GetSection("S3CommandLineOption")["TemporaryPath"]);
+                    console.WriteLine("--- S3-CLI ---");
+                    console.WriteLine("Version:");
+                    console.WriteLine(AppConsts.Version);
+                    console.WriteLine("");
+                    console.WriteLine("Config:");
+                    console.WriteLine("Vendor:{0}", configuration.GetSection("S3CommandLineOption")["Vendor"]);
+                    console.WriteLine("AccessKeyId:{0}", configuration.GetSection("S3CommandLineOption")["AccessKeyId"]);
+                    console.WriteLine("SecretAccessKey:{0}", configuration.GetSection("S3CommandLineOption")["SecretAccessKey"]);
+                    console.WriteLine("ServerUrl:{0}", configuration.GetSection("S3CommandLineOption")["ServerUrl"]);
+                    console.WriteLine("DefaultBucket:{0}", configuration.GetSection("S3CommandLineOption")["DefaultBucket"]);
+                    console.WriteLine("ForcePathStyle:{0}", configuration.GetSection("S3CommandLineOption")["ForcePathStyle"]);
+                    console.WriteLine("SignatureVersion:{0}", configuration.GetSection("S3CommandLineOption")["SignatureVersion"]);
+                    console.WriteLine("TemporaryPath:{0}", configuration.GetSection("S3CommandLineOption")["TemporaryPath"]);
                 }
             });
             return app;
@@ -43,8 +44,9 @@ namespace S3CommandLineTools
 
         /// <summary>Config command
         /// </summary>
-        public static CommandLineApplication ConfigCommand(this CommandLineApplication app, IConfiguration configuration)
+        public static CommandLineApplication ConfigCommand(this CommandLineApplication app, IServiceProvider serviceProvider, IConfiguration configuration)
         {
+            var console = serviceProvider.GetService<IConsole>();
             app.Command("config", commandLine =>
             {
                 commandLine.ResponseFileHandling = ResponseFileHandling.ParseArgsAsLineSeparated;
@@ -104,7 +106,7 @@ namespace S3CommandLineTools
                         var json = JsonSerializer.Serialize(serializeOption);
                         File.WriteAllBytes(filePath, Encoding.UTF8.GetBytes(json));
 
-                        Console.WriteLine("update appsetting!");
+                        console.WriteLine("update appsetting!");
                     });
 
                 });
@@ -142,25 +144,6 @@ namespace S3CommandLineTools
             return app;
         }
 
-
-        /// <summary>List bucket
-        /// </summary>
-        public static CommandLineApplication ListBucketCommand(this CommandLineApplication app, IServiceProvider serviceProvider)
-        {
-            var s3CommandLineService = serviceProvider.GetService<IS3CommandLineService>();
-            //s3-cli listbucket
-            app.Command("list_bucket", commandLine =>
-            {
-                commandLine.ResponseFileHandling = ResponseFileHandling.ParseArgsAsLineSeparated;
-                commandLine.Description = "List bucket";
-                commandLine.OnExecuteAsync((cancellationToken) =>
-                {
-                    return s3CommandLineService.ListBucketAsync();
-                });
-            });
-            return app;
-        }
-
         /// <summary>List
         /// </summary>
         public static CommandLineApplication ListCommand(this CommandLineApplication app, IServiceProvider serviceProvider)
@@ -172,21 +155,40 @@ namespace S3CommandLineTools
             app.Command("list", commandLine =>
             {
                 commandLine.ResponseFileHandling = ResponseFileHandling.ParseArgsAsLineSeparated;
-                commandLine.Description = "List objects";
+                commandLine.Description = "List bucket or object";
 
-                var bucketOption = commandLine.Option("-b|--bucket", $"BucketName,default is '{option.DefaultBucket}'", CommandOptionType.SingleOrNoValue);
-                var maxOption = commandLine.Option<int>("-m|--max", "Max objects count", CommandOptionType.SingleOrNoValue);
-                var prefixOption = commandLine.Option("-p|--prefix", "Prefix", CommandOptionType.SingleOrNoValue);
-                var delimiterOption = commandLine.Option("-d|--delimiter", "Delimiter", CommandOptionType.SingleOrNoValue);
-
-                commandLine.OnExecuteAsync((cancellationToken) =>
+                //s3-cli list bucket 
+                commandLine.Command("bucket", listCommand =>
                 {
-                    var bucket = bucketOption.HasValue() ? bucketOption.Value() : option.DefaultBucket;
-                    var max = maxOption.HasValue() ? maxOption.ParsedValue : 10;
-                    var prefix = prefixOption.HasValue() ? prefixOption.Value() : "";
-                    var delimiter = delimiterOption.HasValue() ? delimiterOption.Value() : "";
-                    return s3CommandLineService.ListObjectV2Async(bucket, max, prefix, delimiter);
+                    listCommand.ResponseFileHandling = ResponseFileHandling.ParseArgsAsLineSeparated;
+                    listCommand.Description = "List bucket";
+                    listCommand.OnExecuteAsync((cancellationToken) =>
+                    {
+                        return s3CommandLineService.ListBucketAsync();
+                    });
                 });
+
+                //s3-cli list object
+                commandLine.Command("object", listCommand =>
+                {
+                    listCommand.ResponseFileHandling = ResponseFileHandling.ParseArgsAsLineSeparated;
+                    listCommand.Description = "List object ";
+
+                    var bucketOption = listCommand.Option("-b|--bucket", $"BucketName,default is '{option.DefaultBucket}'", CommandOptionType.SingleOrNoValue);
+                    var maxOption = listCommand.Option<int>("-m|--max", "Max objects count", CommandOptionType.SingleOrNoValue);
+                    var prefixOption = listCommand.Option("-p|--prefix", "Prefix", CommandOptionType.SingleOrNoValue);
+                    var delimiterOption = listCommand.Option("-d|--delimiter", "Delimiter", CommandOptionType.SingleOrNoValue);
+
+                    listCommand.OnExecuteAsync((cancellationToken) =>
+                    {
+                        var bucket = bucketOption.HasValue() ? bucketOption.Value() : option.DefaultBucket;
+                        var max = maxOption.HasValue() ? maxOption.ParsedValue : 10;
+                        var prefix = prefixOption.HasValue() ? prefixOption.Value() : "";
+                        var delimiter = delimiterOption.HasValue() ? delimiterOption.Value() : "";
+                        return s3CommandLineService.ListObjectV2Async(bucket, max, prefix, delimiter);
+                    });
+                });
+
             });
             return app;
         }
@@ -257,63 +259,61 @@ namespace S3CommandLineTools
             app.Command("upload", commandLine =>
             {
                 commandLine.ResponseFileHandling = ResponseFileHandling.ParseArgsAsLineSeparated;
-                commandLine.Description = "Upload objects from path or dir.";
+                commandLine.Description = "Upload objects from path or dynamic create objects and upload";
 
-                var bucketOption = commandLine.Option("-b|--bucket", $"BucketName,default is '{option.DefaultBucket}'", CommandOptionType.SingleOrNoValue);
-                var filePathsOption = commandLine.Option("-p|--path <PATHS>", "Upload file path(s)", CommandOptionType.MultipleValue);
-
-                var autoDeleteOption = commandLine.Option<bool>("-a|--autodel", "Auto delete the upload files(default is true)", CommandOptionType.SingleOrNoValue);
-
-                var dirOption = commandLine.Option("-d|--dir", $"Directory path to upload.", CommandOptionType.SingleOrNoValue);
-
-                commandLine.OnExecuteAsync((cancellationToken) =>
+                commandLine.Command("file", uploadCommand =>
                 {
-                    var bucket = bucketOption.HasValue() ? bucketOption.Value() : option.DefaultBucket;
-                    var autoDelete = autoDeleteOption.HasValue() ? autoDeleteOption.ParsedValue : true;
+                    uploadCommand.ResponseFileHandling = ResponseFileHandling.ParseArgsAsLineSeparated;
+                    uploadCommand.Description = "Upload objects from path or dir.";
 
-                    var filePaths = new string[] { };
-                    if (filePathsOption.HasValue())
+                    var bucketOption = uploadCommand.Option("-b|--bucket", $"BucketName,default is '{option.DefaultBucket}'", CommandOptionType.SingleOrNoValue);
+
+                    var filePathsOption = uploadCommand.Option("-p|--path <PATHS>", "Upload file path(s)", CommandOptionType.MultipleValue);
+
+                    var autoDeleteOption = uploadCommand.Option<bool>("-a|--autodel", "Auto delete the upload files(default is true)", CommandOptionType.SingleOrNoValue);
+
+                    var dirOption = uploadCommand.Option("-d|--dir", $"Directory path to upload.", CommandOptionType.SingleOrNoValue);
+
+                    uploadCommand.OnExecuteAsync((cancellationToken) =>
                     {
-                        filePaths = filePathsOption.Values.ToArray();
-                    }
-                    else
-                    {
-                        if (dirOption.HasValue())
+                        var bucket = bucketOption.HasValue() ? bucketOption.Value() : option.DefaultBucket;
+                        var autoDelete = autoDeleteOption.HasValue() ? autoDeleteOption.ParsedValue : true;
+
+                        var filePaths = new string[] { };
+                        if (filePathsOption.HasValue())
                         {
-                            filePaths = Directory.GetFiles(dirOption.Value());
+                            filePaths = filePathsOption.Values.ToArray();
                         }
-                    }
+                        else
+                        {
+                            if (dirOption.HasValue())
+                            {
+                                filePaths = Directory.GetFiles(dirOption.Value());
+                            }
+                        }
 
-                    return s3CommandLineService.UploadObjectAsync(bucket, autoDelete, filePaths);
+                        return s3CommandLineService.UploadObjectAsync(bucket, autoDelete, filePaths);
+                    });
                 });
-            });
-            return app;
-        }
 
-        /// <summary>upload
-        /// </summary>
-        public static CommandLineApplication UploadDefaultCommand(this CommandLineApplication app, IServiceProvider serviceProvider)
-        {
-            var s3CommandLineService = serviceProvider.GetService<IS3CommandLineService>();
-            var option = serviceProvider.GetService<IOptions<S3CommandLineOption>>().Value;
-
-            //s3-cli upload_default
-            app.Command("upload_default", commandLine =>
-            {
-                commandLine.ResponseFileHandling = ResponseFileHandling.ParseArgsAsLineSeparated;
-                commandLine.Description = "Upload default object.";
-
-                var bucketOption = commandLine.Option("-b|--bucket", $"BucketName,default is '{option.DefaultBucket}'", CommandOptionType.SingleOrNoValue);
-                var autoDeleteOption = commandLine.Option<bool>("-a|--autodel", "Auto delete the upload files(default is true)", CommandOptionType.SingleOrNoValue);
-                var fileSizeOption = commandLine.Option<int>("-s|--size", "Upload file size(dynamic generate object use this size.)", CommandOptionType.SingleOrNoValue);
-
-                commandLine.OnExecuteAsync((cancellationToken) =>
+                commandLine.Command("default", uploadCommand =>
                 {
-                    var bucket = bucketOption.HasValue() ? bucketOption.Value() : option.DefaultBucket;
-                    var autoDelete = autoDeleteOption.HasValue() ? autoDeleteOption.ParsedValue : true;
-                    var fileSize = fileSizeOption.HasValue() ? fileSizeOption.ParsedValue : 1024 * 1024;
-                    return s3CommandLineService.UploadDefaultObjectAsync(bucket, autoDelete, fileSize);
+                    uploadCommand.ResponseFileHandling = ResponseFileHandling.ParseArgsAsLineSeparated;
+                    uploadCommand.Description = "Upload default object.";
+
+                    var bucketOption = uploadCommand.Option("-b|--bucket", $"BucketName,default is '{option.DefaultBucket}'", CommandOptionType.SingleOrNoValue);
+                    var autoDeleteOption = uploadCommand.Option<bool>("-a|--autodel", "Auto delete the upload files(default is true)", CommandOptionType.SingleOrNoValue);
+                    var fileSizeOption = uploadCommand.Option<int>("-s|--size", "Upload file size(dynamic generate object use this size.)", CommandOptionType.SingleOrNoValue);
+
+                    uploadCommand.OnExecuteAsync((cancellationToken) =>
+                    {
+                        var bucket = bucketOption.HasValue() ? bucketOption.Value() : option.DefaultBucket;
+                        var autoDelete = autoDeleteOption.HasValue() ? autoDeleteOption.ParsedValue : true;
+                        var fileSize = fileSizeOption.HasValue() ? fileSizeOption.ParsedValue : 1024 * 1024;
+                        return s3CommandLineService.UploadDefaultObjectAsync(bucket, autoDelete, fileSize);
+                    });
                 });
+
             });
             return app;
         }

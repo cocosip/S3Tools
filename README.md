@@ -6,6 +6,7 @@
 
 ## s3-cli 支持功能
 
+- 获取`s3-cli`的版本与相关参数
 - 配置`s3-cli`的相关参数
 - 列出 `bucket`
 - 列出指定数量的文件
@@ -30,17 +31,38 @@
   - 在`export`下新增如下配置 `export PATH=$PATH:/data/S3Cli_Linux`
   - `source /etc/profile`
 
-## 相关命令
+## 选项与命令
 
-> 使用 `s3-cli -h`可以获取相关的命令参数,在各级的命令下可以使用`-h`来获取当前命令的参数,如: `s3-cli config -h`,`s3-cli config set -h`
+- Options
+  - `-v|--version` 版本信息
+  - `-i|--info` 版本与配置信息
 
-### config命令
+- Commands
+  - `config` 相关配置
+  - `acl` 权限信息
+  - `list` bucket列表与对象列表
+  - `copy` 拷贝文件
+  - `del` 删除文件
+  - `download` 下载文件
+  - `gen` 生成文件访问url
+  - `speed` 上传下载测速
+  - `upload` 上传
 
-#### config info命令
+### Options
 
-- 获取参数配置信息`s3-cli config info`
+#### 获取版本信息
 
-#### config set命令
+- `s3-cli -v`
+
+#### 获取版本信息与配置信息
+
+- `s3-cli -i`
+
+### Commands
+
+#### config命令
+
+##### config set命令
 
 > `config set`为参数配置命令
 
@@ -55,8 +77,6 @@
 
 >例如: `s3-cli config set -v:Amazon -ak:minioadmin -sk:minioadmin -s:http://192.168.0.4:9090 -b:testbucket -f:true -sv:2.0 -t:d:\Test`
 
-### acl命令
-
 #### acl get 命令
 
 > 获取bucket的权限信息
@@ -66,11 +86,14 @@
 
 > 例如: `s3-cli acl  -b:testbucket -k:123456.txt`
 
-### list_bucket命令
+#### list 命令
 
-- 列出当前ak,sk下全部的bucket: `s3-cli list_bucket`
+##### list bucket 命令
 
-### list 命令
+> 列出当前ak,sk下的bucket
+> 例如: `s3-cli list bucket`
+
+##### list object 命令
 
 > 列出指定数量的对象信息
 
@@ -79,11 +102,15 @@
 - `-p|--prefix` 前缀
 - `-d|--delimiter` 分隔符
 
-> 例如: `s3-cli list -b:testbucket -m:10 -prefix:1003/200 -d:/`
+> 例如: `s3-cli list object -b:testbucket -m:10 -prefix:1003/200 -d:/`
 
-### upload 命令
+#### upload 命令
 
 > 上传文件(超过5MB的文件自动分片)
+
+##### upload file 命令
+
+> 上传指定的文件或者指定文件夹下的文件
 
 - `-b|--bucket` 使用的bucket名
 - `-p|--path` 上传的文件的路径(可以指定多个上传路径 `-p:1.txt -p:2.txt ...`)
@@ -92,9 +119,7 @@
 
 > 例如: `s3-cli upload -b:testbucket -p:1.txt -p:2.txt -a:true` 或 `s3-cli upload -b:testbucket -a:true -d:D:\Test1`
 
-### upload_default 命令
-
-> 上传指定大小的文件(自动生成文件数据上传,超过5MB的文件自动分片)
+##### upload default 命令
 
 - `-b|--bucket` 使用的bucket名
 - `-a|--autodel` 上传后是否自动删除(默认为true)
@@ -109,7 +134,7 @@
 - `-b|--bucket` 使用的bucket名
 - `-k|--key` 下载文件的key,可以指定多个
 
-> 例如: `s3-cli download -b:testbucket -k:1000/1.txt -k:1000/2.txt`
+> 例如: `s3-cli download -b:testbucket -k:1000/1.txt -k:1000/100.txt`
 
 ### del 命令
 
@@ -118,7 +143,7 @@
 - `-b|--bucket` 使用的bucket名
 - `-k|--key` 删除文件的key,可以指定多个
 
-> 例如: `s3-cli del -b:testbucket -k:1000/1.txt -k:1000/2.txt`
+> 例如: `s3-cli del -b:testbucket -k:1000/1.txt -k:1000/101.txt`
 
 ### copy 命令
 
