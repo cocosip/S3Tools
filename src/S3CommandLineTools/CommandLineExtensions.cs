@@ -1,14 +1,12 @@
 ﻿using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.Configuration;
-using System;
-using System.IO;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Text.Json;
-using System.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using System;
+using System.IO;
 using System.Linq;
+using System.Text;
+using System.Text.Json;
 
 namespace S3CommandLineTools
 {
