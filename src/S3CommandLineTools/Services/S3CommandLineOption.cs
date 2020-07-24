@@ -26,6 +26,10 @@
         /// </summary>
         public bool ForcePathStyle { get; set; } = true;
 
+        /// <summary>UseChunkEncoding
+        /// </summary>
+        public bool UseChunkEncoding { get; set; }
+
         /// <summary>SignatureVersion
         /// </summary>
         public string SignatureVersion { get; set; }

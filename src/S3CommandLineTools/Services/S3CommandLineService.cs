@@ -300,7 +300,7 @@ namespace S3CommandLineTools
             {
                 BucketName = bucket,
                 Key = objectKey,
-                Expires = expires
+                Expires = expires,
             };
             var url = client.GetPreSignedURL(request);
             _console.WriteLine("PresignedURL:[{0}]", url);
@@ -463,6 +463,7 @@ namespace S3CommandLineTools
             {
                 BucketName = _option.DefaultBucket,
                 Key = objectKey,
+
             });
 
             //上传Id
@@ -520,7 +521,8 @@ namespace S3CommandLineTools
                             Key = objectKey,
                             InputStream = new MemoryStream(buffer),
                             PartSize = size,
-                            PartNumber = i + 1
+                            PartNumber = i + 1,
+                            UseChunkEncoding = _option.UseChunkEncoding
                         });
 
                     }).ContinueWith(t =>
@@ -574,6 +576,7 @@ namespace S3CommandLineTools
                 AutoCloseStream = true,
                 Key = objectKey,
                 CannedACL = S3CannedACL.Private,
+                UseChunkEncoding = false
             };
 
             if (!string.IsNullOrWhiteSpace(filePath))

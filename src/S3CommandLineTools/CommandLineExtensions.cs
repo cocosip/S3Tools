@@ -33,6 +33,7 @@ namespace S3CommandLineTools
                     console.WriteLine("ServerUrl:{0}", configuration.GetSection("S3CommandLineOption")["ServerUrl"]);
                     console.WriteLine("DefaultBucket:{0}", configuration.GetSection("S3CommandLineOption")["DefaultBucket"]);
                     console.WriteLine("ForcePathStyle:{0}", configuration.GetSection("S3CommandLineOption")["ForcePathStyle"]);
+                    console.WriteLine("UseChunkEncoding:{0}", configuration.GetSection("S3CommandLineOption")["UseChunkEncoding"]);
                     console.WriteLine("SignatureVersion:{0}", configuration.GetSection("S3CommandLineOption")["SignatureVersion"]);
                     console.WriteLine("TemporaryPath:{0}", configuration.GetSection("S3CommandLineOption")["TemporaryPath"]);
                 }
@@ -76,6 +77,9 @@ namespace S3CommandLineTools
                     var serverUrlOption = configCommand.Option("-s|--server_url", "Set ServerUrl", CommandOptionType.SingleOrNoValue);
                     var defaultBucketOption = configCommand.Option("-b|--bucket", "Set DefaultBucket", CommandOptionType.SingleOrNoValue);
                     var forcePathStyleOption = configCommand.Option<bool>("-f|--force_path", "Set ForcePathStyle", CommandOptionType.SingleOrNoValue);
+
+                    var useChunkEncodingOption = configCommand.Option<bool>("-u|--use_chunk_encoding", "Set UseChunkEncoding", CommandOptionType.SingleOrNoValue);
+
                     var signatureVersionOption = configCommand.Option("-sv|--sign_version", "Set SignatureVersion(2.0)", CommandOptionType.SingleOrNoValue);
                     var temporaryPathOption = configCommand.Option("-t|--temporary", "Set TemporaryPath", CommandOptionType.SingleOrNoValue);
 
@@ -92,6 +96,7 @@ namespace S3CommandLineTools
                             ServerUrl = serverUrlOption.HasValue() ? serverUrlOption.Value() : configuration.GetSection("S3CommandLineOption")["ServerUrl"],
                             DefaultBucket = defaultBucketOption.HasValue() ? defaultBucketOption.Value() : configuration.GetSection("S3CommandLineOption")["DefaultBucket"],
                             ForcePathStyle = forcePathStyleOption.HasValue() ? forcePathStyleOption.ParsedValue : true,
+                            UseChunkEncoding = useChunkEncodingOption.HasValue() ? useChunkEncodingOption.ParsedValue : false,
                             SignatureVersion = signatureVersionOption.HasValue() ? signatureVersionOption.Value() : "",
                             TemporaryPath = temporaryPathOption.HasValue() ? temporaryPathOption.Value() : Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "data")
                         };
@@ -307,7 +312,7 @@ namespace S3CommandLineTools
                     {
                         var bucket = bucketOption.HasValue() ? bucketOption.Value() : option.DefaultBucket;
                         var autoDelete = autoDeleteOption.HasValue() ? autoDeleteOption.ParsedValue : true;
-                        var fileSize = fileSizeOption.HasValue() ? fileSizeOption.ParsedValue : 1024 * 1024;
+                        var fileSize = fileSizeOption.HasValue() ? fileSizeOption.ParsedValue : 1024 * 512;
                         return s3CommandLineService.UploadDefaultObjectAsync(bucket, autoDelete, fileSize);
                     });
                 });
@@ -394,7 +399,7 @@ namespace S3CommandLineTools
                     var objectKey = objectKeyOption.Value();
                     var expiresSecond = expiresSecondOption.HasValue() ? expiresSecondOption.ParsedValue : 60;
                     var expires = DateTime.Now.AddSeconds(expiresSecond);
-                    s3CommandLineService.GeneratePreSignedURL(bucket, objectKey, expires);
+                    s3CommandLineService.GetPreSignedURL(bucket, objectKey, expires);
                 });
             });
             return app;
