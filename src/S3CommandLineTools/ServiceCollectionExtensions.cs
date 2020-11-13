@@ -1,4 +1,5 @@
-﻿using Amazon.S3.Multiplex;
+﻿using AutoS3;
+using AutoS3.KS3;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 
@@ -10,14 +11,12 @@ namespace S3CommandLineTools
         {
             if (configure == null)
             {
-                configure = c =>
-                {
-                };
+                configure = new Action<S3CommandLineOption>(o => { });
             }
 
             services
-                .AddS3Multiplex()
-                .AddS3MultiplexKS3Builder()
+                .AddAutoS3()
+                .AddAutoKS3()
                 .Configure<S3CommandLineOption>(configure)
                 .AddSingleton<IS3CommandLineService, S3CommandLineService>()
                 ;

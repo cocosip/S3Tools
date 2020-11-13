@@ -1,7 +1,7 @@
 ﻿using Amazon.S3;
 using Amazon.S3.Model;
-using Amazon.S3.Multiplex;
 using AmazonKS3;
+using AutoS3;
 using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.Options;
 using System;
@@ -414,10 +414,10 @@ namespace S3CommandLineTools
             {
                 return _s3ClientFactory.GetOrAddClient(_option.AccessKeyId, _option.SecretAccessKey, () =>
                 {
-                    return new S3ClientDescriptor()
+                    return new S3ClientConfiguration()
                     {
-                        VendorType = S3VendorType.KS3,
-                        ClientCount = 10,
+                        Vendor = S3VendorType.KS3,
+                        MaxClient = 10,
                         AccessKeyId = _option.AccessKeyId,
                         SecretAccessKey = _option.SecretAccessKey,
                         Config = new AmazonKS3Config()
@@ -433,10 +433,10 @@ namespace S3CommandLineTools
             {
                 return _s3ClientFactory.GetOrAddClient(_option.AccessKeyId, _option.SecretAccessKey, () =>
                 {
-                    return new S3ClientDescriptor()
+                    return new S3ClientConfiguration()
                     {
-                        VendorType = S3VendorType.Amazon,
-                        ClientCount = 10,
+                        Vendor = S3VendorType.Amazon,
+                        MaxClient = 10,
                         AccessKeyId = _option.AccessKeyId,
                         SecretAccessKey = _option.SecretAccessKey,
                         Config = new AmazonS3Config()
