@@ -412,7 +412,7 @@ namespace S3CommandLineTools
 
             if (_option.Vendor == S3Vendor.KS3)
             {
-                return _s3ClientFactory.GetOrAddClient(_option.AccessKeyId, _option.SecretAccessKey, () =>
+                return _s3ClientFactory.GetOrAdd("default", () =>
                 {
                     return new S3ClientConfiguration()
                     {
@@ -431,7 +431,7 @@ namespace S3CommandLineTools
             }
             else
             {
-                return _s3ClientFactory.GetOrAddClient(_option.AccessKeyId, _option.SecretAccessKey, () =>
+                return _s3ClientFactory.GetOrAdd("default", () =>
                 {
                     return new S3ClientConfiguration()
                     {
