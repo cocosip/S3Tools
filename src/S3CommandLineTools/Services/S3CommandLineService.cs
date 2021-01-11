@@ -463,7 +463,6 @@ namespace S3CommandLineTools
             {
                 BucketName = _option.DefaultBucket,
                 Key = objectKey,
-
             });
 
             //上传Id
