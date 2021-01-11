@@ -4,7 +4,12 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <AssemblyName>s3-cli</AssemblyName>
+    <UserSecretsId>898bb7da-0b77-4624-aaa5-bb26ae2ffb1c</UserSecretsId>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="3.1.0" />
+  </ItemGroup>
  
   <ItemGroup>
     <ProjectReference Include="..\S3CommandLineTools\S3CommandLineTools.csproj" />

@@ -38,5 +38,10 @@
         /// </summary>
         public string TemporaryPath { get; set; }
 
+        /// <summary>
+        /// 分片上传多线程分片
+        /// </summary>
+        public bool MultipartMultiThread { get; set; } = false;
+
     }
 }

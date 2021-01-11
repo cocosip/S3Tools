@@ -511,9 +511,30 @@ namespace S3CommandLineTools
                     byte[] buffer = new byte[size];
                     uploadStream.Read(buffer, 0, size);
 
-                    uploadPartTasks.Add(Task.Run<UploadPartResponse>(() =>
+                    if (_option.MultipartMultiThread)
                     {
-                        return client.UploadPartAsync(new UploadPartRequest()
+                        uploadPartTasks.Add(Task.Run<UploadPartResponse>(() =>
+                        {
+                            return client.UploadPartAsync(new UploadPartRequest()
+                            {
+                                BucketName = _option.DefaultBucket,
+                                UploadId = uploadId,
+                                Key = objectKey,
+                                InputStream = new MemoryStream(buffer),
+                                PartSize = size,
+                                PartNumber = i + 1,
+                                UseChunkEncoding = _option.UseChunkEncoding
+                            });
+
+                        }).ContinueWith(t =>
+                        {
+                            partETags.Add(new PartETag(t.Result.PartNumber, t.Result.ETag));
+                            _console.WriteLine("finish {0}/{1}", partETags.Count, partCount);
+                        }));
+                    }
+                    else
+                    {
+                        var response = await client.UploadPartAsync(new UploadPartRequest()
                         {
                             BucketName = _option.DefaultBucket,
                             UploadId = uploadId,
@@ -524,15 +545,16 @@ namespace S3CommandLineTools
                             UseChunkEncoding = _option.UseChunkEncoding
                         });
 
-                    }).ContinueWith(t =>
-                    {
-                        partETags.Add(new PartETag(t.Result.PartNumber, t.Result.ETag));
-                        _console.WriteLine("finish {0}/{1}", partETags.Count, partCount);
-                    }));
+                        partETags.Add(new PartETag(response.PartNumber, response.ETag));
+                        _console.WriteLine("single thread mulit-part finish {0}/{1}", partETags.Count, partCount);
+                    }
                 }
             }
 
-            Task.WaitAll(uploadPartTasks.ToArray());
+            if (_option.MultipartMultiThread)
+            {
+                Task.WaitAll(uploadPartTasks.ToArray());
+            }
 
             _console.WriteLine("Total '{0}' PartETags", partETags.Count);
 
@@ -568,7 +590,7 @@ namespace S3CommandLineTools
         private async Task<string> SimpleUploadAsync(string bucket, string objectKey, string filePath = "", Stream stream = null)
         {
             var client = GetClient();
-            Console.WriteLine("---Simple upload key:{0}---", objectKey);
+            _console.WriteLine("---Simple upload key:{0}---", objectKey);
             var putObjectRequest = new PutObjectRequest()
             {
                 BucketName = _option.DefaultBucket,
@@ -591,7 +613,7 @@ namespace S3CommandLineTools
                 putObjectRequest.InputStream = stream;
             }
 
-            var putObjectResponse = await GetClient().PutObjectAsync(putObjectRequest);
+            var putObjectResponse = await client.PutObjectAsync(putObjectRequest);
             _console.WriteLine("Simple upload complete ,key:{0},Etag:{1}", objectKey, putObjectResponse.ETag);
             return objectKey;
         }
