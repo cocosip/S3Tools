@@ -19,9 +19,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{CE12C5BA-380
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "S3CommandLineTools", "src\S3CommandLineTools\S3CommandLineTools.csproj", "{7E1A725A-7969-405D-AB68-A1827B63025C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "S3CommandLineTools.Net5Host", "src\S3CommandLineTools.Net5Host\S3CommandLineTools.Net5Host.csproj", "{90495A06-9B92-42EE-8F26-BA36CBF5C237}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "S3CommandLineTools.Net5Host", "src\S3CommandLineTools.Net5Host\S3CommandLineTools.Net5Host.csproj", "{90495A06-9B92-42EE-8F26-BA36CBF5C237}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "S3CommandLineTools.NetCore3Host", "src\S3CommandLineTools.NetCore3Host\S3CommandLineTools.NetCore3Host.csproj", "{AE672057-F69D-4135-B23A-42AB84EDE749}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "S3CommandLineTools.NetCore3Host", "src\S3CommandLineTools.NetCore3Host\S3CommandLineTools.NetCore3Host.csproj", "{AE672057-F69D-4135-B23A-42AB84EDE749}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
